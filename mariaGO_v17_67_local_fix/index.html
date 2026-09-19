@@ -6922,7 +6922,7 @@ body{
 
 
 <style id="maria-v17-59-manila-bonus-lcd-style">
-#manilaBonusLcd{position:absolute!important;inset:0!important;z-index:3!important;opacity:0;visibility:hidden;pointer-events:none;background-image:linear-gradient(180deg,rgba(29,8,58,.15),rgba(29,8,58,.7)),url("data:image/png;background-size:cover!important;background-position:center!important;transition:opacity .28s ease;display:flex;align-items:center;justify-content:center;flex-direction:column;box-shadow:inset 0 0 45px #e7b84d;}
+#manilaBonusLcd{position:absolute!important;inset:0!important;z-index:3!important;opacity:0;visibility:hidden;pointer-events:none;background-image:linear-gradient(180deg,rgba(29,8,58,.15),rgba(29,8,58,.7)),url("assets/images/image_020.png");background-size:cover!important;background-position:center!important;transition:opacity .28s ease;display:flex;align-items:center;justify-content:center;flex-direction:column;box-shadow:inset 0 0 45px #e7b84d;}
 #manilaBonusLcd.show{opacity:1!important;visibility:visible!important;}
 #manilaBonusLcd .manila-bonus-title{font-size:clamp(28px,5vw,56px);font-weight:900;color:#fff0ac;text-align:center;line-height:1.12;letter-spacing:.08em;text-shadow:0 3px 0 #793d11,0 0 24px #eea52c;}
 #manilaBonusLcd .manila-bonus-caption{margin-top:14px;font-size:14px;font-weight:700;color:#fff;text-shadow:0 2px 4px #000;letter-spacing:.12em;}
@@ -6939,10 +6939,16 @@ body{
 .airport-wish-dot.left{left:16.3%;}.airport-wish-dot.right{right:16.3%;}
 </style>
 <script src="assets/data/reel-image.js"></script>
+<style id="v1768-display-repair">
+#airportReturnCountdown{position:absolute!important;right:17.5%!important;top:14.3%!important;z-index:150!important;max-width:64%;padding:6px 10px;border:1px solid #ffd777;border-radius:6px;background:rgba(0,0,0,.88);color:#fff4bf;font:bold clamp(12px,2vw,18px)/1.3 sans-serif;pointer-events:none;white-space:nowrap;}
+#airportReturnCountdown[hidden]{display:none!important;}
+#airportReturnCountdown:not([hidden]){display:block!important;visibility:visible!important;opacity:1!important;}
+</style>
 </head>
 <body>
 <div class="machine-row">
 <div class="machine">
+<div id="airportReturnCountdown" hidden aria-live="polite"></div>
 <div id="mariaHeatFlash" aria-hidden="true"></div>
 <!-- v15.5 下パネル：ユーザー指定画像をそのまま表示 -->
 <div id="mariaBottomPanel" aria-hidden="true">
@@ -7659,6 +7665,20 @@ body{
     const scene = document.getElementById('normalScene');
     if(!scene) return;
 
+    const inAirport = currentStage === 'AIRPORT' || currentStage === 'SPECIAL';
+    const bg = document.getElementById('stageBackground');
+    if(bg){
+      const image = inAirport
+        ? (scene.classList.contains('airport-bus-stop') ? 'image_028.png' : 'image_021.png')
+        : currentStage === 'MANILA' ? 'image_020.png'
+        : currentStage === 'CEBU' ? 'image_019.png' : 'image_016.png';
+      bg.style.setProperty('background-image', 'url("assets/images/' + image + '")', 'important');
+      bg.style.setProperty('opacity','1','important');
+      bg.style.setProperty('visibility','visible','important');
+    }
+    const bonusScreen = ['DUMAGUETE','CEBU','MANILA'].includes(bonusMode);
+    scene.style.setProperty('opacity',bonusScreen ? '0' : '1','important');
+    scene.style.setProperty('visibility',bonusScreen ? 'hidden' : 'visible','important');
     scene.classList.remove('stage-dumaguete','stage-cebu','stage-manila','stage-airport');
 
     if(currentStage === 'DUMAGUETE'){
@@ -7828,13 +7848,18 @@ body{
         el.classList.add('bonus','manila-bonus');
         el.style.display = 'block';
       }else if((currentStage === 'AIRPORT' || currentStage === 'SPECIAL') && !window.MariaAirportPhone?.state?.().episodeComplete && !window.MariaFinalDriveBonus?.active?.()){
-        el.classList.add('airport-countdown');
-        el.textContent = airportBonusGuaranteed ? 'AIRPORT BONUS 確定' : `帰国まで あと${Math.max(0, AIRPORT_GAME_LIMIT - airportGamesPlayed)}ゲーム`;
-        el.style.display = 'block';
+        el.textContent = '';
+        el.style.display = 'none';
       }else{
         el.textContent = '';
         el.style.display = 'none';
       }
+    }
+    const countdown = document.getElementById('airportReturnCountdown');
+    if(countdown){
+      const airportOn = (currentStage === 'AIRPORT' || currentStage === 'SPECIAL') && bonusMode === 'NONE' && !window.MariaAirportPhone?.state?.()?.episodeComplete && !window.MariaFinalDriveBonus?.active?.();
+      countdown.hidden = !airportOn;
+      countdown.textContent = airportOn ? (airportBonusGuaranteed ? 'AIRPORT BONUS 確定' : `帰国まで あと${Math.max(0, AIRPORT_GAME_LIMIT - airportGamesPlayed)}ゲーム`) : '';
     }
     updateBottomPanelVisual();
     updateNormalStageVisual();
@@ -11100,12 +11125,6 @@ window.addEventListener('beforeunload',()=>window.MariaManilaBonusBgm?.stop?.(0)
       stageBackground.style.removeProperty('background-size');
       stageBackground.style.removeProperty('background-position');
       stageBackground.style.removeProperty('background-repeat');
-
-      const prev = stageBackground.dataset.airportPreviousInlineBackground || '';
-      const priority = stageBackground.dataset.airportPreviousInlineBackgroundPriority || '';
-      if(prev){
-        stageBackground.style.setProperty('background-image', prev, priority);
-      }
 
       delete stageBackground.dataset.airportPreviousInlineBackground;
       delete stageBackground.dataset.airportPreviousInlineBackgroundPriority;
